@@ -29,6 +29,7 @@ class PublishCommand extends Command
     {
         $this->info('Publishing all files');
         $this->call('vendor:publish', [
+            '--force',
             '--provider' => 'L5Swagger\L5SwaggerServiceProvider',
         ]);
     }

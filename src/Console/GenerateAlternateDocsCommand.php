@@ -4,16 +4,18 @@ namespace L5Swagger\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Routing\Router;
-use L5Swagger\Generators\Generator;
 
-class GenerateDocsCommand extends Command
+class GenerateAlternateDocsCommand extends Command
 {
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'l5-swagger:generate';
+    protected $name = 'l5-swagger:generate_alternate';
+
+
+    protected $generator;
 
     /**
      * The console command description.
@@ -31,16 +33,17 @@ class GenerateDocsCommand extends Command
      * @return void
      */
 
-    public function __construct()
+    public function __construct($generator)
     {
         parent::__construct();
 
+        $this->generator = $generator;
     }
 
 
     public function fire()
     {
-        $this->info('Regenerating docs');
-        Generator::generateDocs();
+        $this->info('Regenerating docs using alternate method');
+        $this->generator->generateDocs();
     }
 }

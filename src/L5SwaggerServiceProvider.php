@@ -4,10 +4,12 @@ namespace L5Swagger;
 
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\Console\GenerateDocsCommand;
+use L5Swagger\Console\GenerateAlternateDocsCommand;
 use L5Swagger\Console\PublishAssetsCommand;
 use L5Swagger\Console\PublishCommand;
 use L5Swagger\Console\PublishConfigCommand;
 use L5Swagger\Console\PublishViewsCommand;
+use Illuminate\Routing\Router;
 
 class L5SwaggerServiceProvider extends ServiceProvider
 {
@@ -23,8 +25,10 @@ class L5SwaggerServiceProvider extends ServiceProvider
 
         // Publish a config file
         $configPath = __DIR__.'/../config/l5-swagger.php';
+        $swagTemplatePath= __DIR__.'/../config/swaggertemplate.json';
         $this->publishes([
             $configPath => config_path('l5-swagger.php'),
+            $swagTemplatePath=> config_path('../'.config('l5-swagger.template_file')),
         ], 'config');
 
         //Publish views
@@ -83,13 +87,29 @@ class L5SwaggerServiceProvider extends ServiceProvider
                 return new GenerateDocsCommand();
             }
         );
+        $this->app['service.l5-swagger.swagger_generator'] = $this->app->share(
+            function () {
+                return new Generators\LaravelSwaggerGenerator(
+                    $this->app['router'],
+                    config('l5-swagger')
+                );
+            }
+        );
+        $this->app['command.l5-swagger.generate_alternate'] = $this->app->share(
+            function () { 
+                return new GenerateAlternateDocsCommand(
+                    $this->app['service.l5-swagger.swagger_generator']
+                );
+            }
+        );
 
         $this->commands(
             'command.l5-swagger.publish',
             'command.l5-swagger.publish-config',
             'command.l5-swagger.publish-views',
             'command.l5-swagger.publish-assets',
-            'command.l5-swagger.generate'
+            'command.l5-swagger.generate',
+            'command.l5-swagger.generate_alternate'
         );
     }
 
@@ -106,6 +126,7 @@ class L5SwaggerServiceProvider extends ServiceProvider
             'command.l5-swagger.publish-views',
             'command.l5-swagger.publish-assets',
             'command.l5-swagger.generate',
+            'command.l5-swagger.generate_alternate',
         ];
     }
 }

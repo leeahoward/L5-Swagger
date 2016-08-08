@@ -1,0 +1,34 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "0.0.0",
+    "title": "Swagger 2.0 Template",
+    "description": "A Sample Swagger Template",
+    "termsOfService": "",
+    "contact": {
+      "name": "Sample Api"
+    },
+    "license": {
+      "name": "None"
+    }
+  },
+  "host": "example.com",
+  "basePath": "/this/is",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "tags":[
+    {
+      "name": "Example Tag",
+      "description": "Example Tag Description"
+    }
+  ],
+  "paths": {},
+  "definitions": {}
+}

@@ -1,6 +1,6 @@
 <?php
 
-namespace L5Swagger;
+namespace L5Swagger\Generators;
 
 use Config;
 use File;

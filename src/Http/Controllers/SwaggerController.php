@@ -2,14 +2,19 @@
 
 namespace L5Swagger\Http\Controllers;
 
+use App;
 use File;
 use Request;
+use Storage;
 use Response;
 use L5Swagger\Generator;
+use Illuminate\Routing\Router;
 use Illuminate\Routing\Controller as BaseController;
 
 class SwaggerController extends BaseController
 {
+
+
     /**
      * Dump api-docs.json content endpoint.
      *
@@ -19,17 +24,37 @@ class SwaggerController extends BaseController
      */
     public function docs($jsonFile = null)
     {
-        $filePath = config('l5-swagger.paths.docs').'/'.
-            (! is_null($jsonFile) ? $jsonFile : config('l5-swagger.paths.docs_json', 'api-docs.json'));
+        $content = "";
 
-        if (File::extension($filePath) === '') {
-            $filePath .= '.json';
-        }
-        if (! File::exists($filePath)) {
-            abort(404, 'Cannot find '.$filePath);
+        // always run the generator if generator_always option is set
+        if ( config('l5-swagger.generate_always') ) {
+            $this->runGenerator();
         }
 
-        $content = File::get($filePath);
+        // only run the generator if the file does not exist
+        if(config('l5-swagger.use_filesystems_api')){
+            // use filesystems_api_disk
+            if(!Storage::drive(config('l5-swagger.filesystems_api_disk'))->exists(config('l5-swagger.paths.docs_json'))) {
+                $this->runGenerator();
+            }
+            // file is there now get the contents
+            $content = Storage::drive(config('l5-swagger.filesystems_api_disk'))->get(config('l5-swagger.paths.docs_json'));
+        }
+        else{
+            // use configred "docs" path and concat with docs_json path to get the file
+            $filePath = config('l5-swagger.paths.docs').'/'.(!is_null($jsonFile) ? $jsonFile : config('l5-swagger.paths.docs_json', 'api-docs.json'));
+
+            if (File::extension($filePath) === '') {
+                $filePath .= '.json';
+            }
+            if (! File::exists($filePath)) {
+                // run generator if file not found
+                $this->runGenerator();
+            }
+            $content = File::get($filePath);
+        }
+
+
 
         return Response::make($content, 200, [
             'Content-Type' => 'application/json',
@@ -43,10 +68,6 @@ class SwaggerController extends BaseController
      */
     public function api()
     {
-        if (config('l5-swagger.generate_always')) {
-            Generator::generateDocs();
-        }
-
         if (config('l5-swagger.proxy')) {
             $proxy = Request::server('REMOTE_ADDR');
             Request::setTrustedProxies([$proxy]);
@@ -68,7 +89,11 @@ class SwaggerController extends BaseController
                 'securityDefinition' => config('l5-swagger.api.security_definition'),
                 'apiKeyInject'       => config('l5-swagger.api.key_inject'),
                 'secure'             => Request::secure(),
-                'urlToDocs'          => route('l5-swagger.docs', config('l5-swagger.paths.docs_json', 'api-docs.json')),
+                // -lee:commented this out because we always want the route only
+                //   Not sure why this uses docs_json - which is the filename
+                //   the 'docs' route by itself should always pull the json file
+                //'urlToDocs'          => route('l5-swagger.docs', config('l5-swagger.paths.docs_json', 'api-docs.json')),
+                'urlToDocs'          => route('l5-swagger.docs'),
                 'requestHeaders'     => config('l5-swagger.headers.request'),
                 'docExpansion'       => config('l5-swagger.docExpansion'),
                 'highlightThreshold' => config('l5-swagger.highlightThreshold'),
@@ -84,5 +109,17 @@ class SwaggerController extends BaseController
         }
 
         return $response;
+    }
+
+    private function runGenerator(){
+        if ( config('l5-swagger.use_alternate_generator') == false) 
+        {
+            \L5Swagger\Generators\Generator::generateDocs();
+        } 
+        else if ( config('l5-swagger.use_alternate_generator') == true) 
+        {
+            App::make('service.l5-swagger.swagger_generator')->generateDocs();
+        }
+
     }
 }
