@@ -4,7 +4,7 @@ use Doctrine\Common\Annotations\DocParser;
 
 use App;
 use Config;
-use File;
+use File; // Illuminate\Filesystem\Filesystem
 use Storage;
 use ReflectionParameter;
 //use L5Swagger\Helpers\ReflectionHelper;
@@ -114,16 +114,23 @@ class LaravelSwaggerGenerator
         $docsJson= $this->config['paths']['docs_json'];
         $excludeDirs = $this->config['paths']['excludes'];
 
+        $filename = $docDir.'/'.$this->config['paths']['docs_json']; // api-docs.jsn
+        $filepath = File::dirname($filename); 
 
-        if (! File::exists($docDir) || is_writable($docDir)) {
-            // delete all existing documentation
-            if (File::exists($docDir)) {
-                File::deleteDirectory($docDir);
-            }
-            File::makeDirectory($docDir);
+
+        //throw new \Exception('File is a :' . print_r(get_class($z->getFacadeRoot()),true ));
+        //throw new \Exception('File is a :' . print_r(get_class_methods($z->getFacadeRoot()),true ));
+
+        if ( File::exists($filename) ) {
+            // delete existing file
+            File::delete($filename);
         }
 
-        $filename = $docDir.'/'.$this->config['paths']['docs_json']; // api-docs.jsn
+        if (!File::exists($filepath) ) {
+            File::makeDirectory($filepath,0755,true);
+        }
+        
+
 
         // save the file
         if (file_put_contents($filename, $this) === false) {
