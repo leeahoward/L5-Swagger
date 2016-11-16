@@ -375,7 +375,7 @@ class LaravelSwaggerGenerator
      */
     protected function getControllerForAction($actionName)
     {
-        Controller::setRouter($this->router);
+        //Controller::setRouter($this->router);
         $segments = explode('@', $actionName);
         return App::make($segments[0]);
     }
@@ -387,7 +387,7 @@ class LaravelSwaggerGenerator
      */
     protected function getControllerMiddleware($actionName)
     {
-        Controller::setRouter($this->router);
+        //Controller::setRouter($this->router);
         $segments = explode('@', $actionName);
         $controller = $this->getControllerForAction($actionName);
         $methodname = $segments[1];
